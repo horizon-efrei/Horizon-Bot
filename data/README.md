@@ -1,9 +1,11 @@
 # Data Directory
 
-This folder contains bot data storage.
+Ce dossier contient les fichiers de données utilisés par le bot.
 
-## Files
-- `bot_data.db` - SQLite database (auto-generated)
-- `bot_data.db-journal` - SQLite journal file (temporary)
+## Fichiers
 
-The database is automatically created when the bot runs for the first time.
+- `bot_data.db` - Base de données SQLite (auto-générée)
+- `bot_data.db-journal` - Fichier journal SQLite (temporaire)
+- `class_modules.json` - Configuration des matières et des salons de cours
+
+La base de données est automatiquement créée lorsque le bot est lancé pour la première fois.

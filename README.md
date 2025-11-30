@@ -1,4 +1,4 @@
-# HorizonBot - Système de Gestion de Cours en Ligne
+# Horizon Bot
 
 Bot Discord du serveur Horizon Ef'Réussite.
 
