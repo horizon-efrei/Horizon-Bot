@@ -1,0 +1,75 @@
+{
+    "Info-P1" : {
+        "stage-id" : "",
+        "vocal-id" : "", 
+        "matières" : [
+        ]
+    },
+    "Info-P2" : {
+        "stage-id" : "",
+        "vocal-id" : "", 
+        "matières" : [
+        ]
+
+    },
+    "Info-I1" : {
+        "stage-id" : "",
+        "vocal-id" : "", 
+        "matières" : [
+        ]
+    },
+    "Maths-P1" : {
+        "stage-id" : "",
+        "vocal-id" : "", 
+        "matières" : [
+        ]
+    },
+    "Maths-P2" : {
+        "stage-id" : "",
+        "vocal-id" : "", 
+        "matières" : [
+        ]
+    },
+    "Maths-I1" : {
+        "stage-id" : "",
+        "vocal-id" : "", 
+        "matières" : [
+        ]
+    },
+    "Physique-P1" : {
+        "stage-id" : "",
+        "vocal-id" : "", 
+        "matières" : [
+        ]
+    },
+    "Physique-P2" : {
+        "stage-id" : "",
+        "vocal-id" : "", 
+        "matières" : [
+        ]
+    },
+    "Physique-I1" : {
+        "stage-id" : "",
+        "vocal-id" : "", 
+        "matières" : [
+        ]
+    },
+    "Formation-générale-P1" : {
+        "stage-id" : "",
+        "vocal-id" : "", 
+        "matières" : [
+        ]
+    },
+    "Formation-générale-P2" : {
+        "stage-id" : "",
+        "vocal-id" : "", 
+        "matières" : [
+        ]
+    },
+    "Formation-générale-I1" : {
+        "stage-id" : "",
+        "vocal-id" : "", 
+        "matières" : [
+        ]
+    }
+}
