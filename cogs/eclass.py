@@ -481,6 +481,168 @@ class EClassCog(commands.Cog):
         self.data.update_eclass(eclass_id, updates)
         await send_success(interaction, f"Le cours '{eclass['title']}' a été annulé !", ephemeral=False)
 
+    @eclass.command(name="edit", description="Modifier un cours programmé")
+    @app_commands.describe(
+        eclass_id="Sélectionnez le cours à modifier",
+        title="Nouveau titre (optionnel)",
+        description="Nouvelle description (optionnel)",
+        date="Nouvelle date et heure (format: DD-MM-YYYY HH:MM, optionnel)",
+        duration="Nouvelle durée en minutes (optionnel)"
+    )
+    @app_commands.autocomplete(eclass_id=scheduled_eclass_autocomplete)
+    async def edit(
+        self,
+        interaction: discord.Interaction,
+        eclass_id: str,
+        title: str = None,
+        description: str = None,
+        date: str = None,
+        duration: int = None
+    ):
+        # Check if user can create/manage eclasses
+        if not can_create_eclass(interaction):
+            await send_error(interaction, "Vous devez avoir le rôle 'Etudiant-prof' ou gestionnaire de cours !")
+            return
+        
+        # Extract eclass_id if user manually typed "EC0001 - Title" instead of using autocomplete
+        if ' - ' in eclass_id:
+            eclass_id = eclass_id.split(' - ')[0].strip()
+        
+        eclass = self.data.get_eclass(eclass_id)
+        if not eclass:
+            await send_error(interaction, "Cours introuvable !")
+            return
+        
+        # Check if user is the teacher or has management permission
+        is_owner = eclass['teacher_id'] == interaction.user.id
+        can_manage = can_manage_eclass(interaction)
+        
+        if not is_owner and not can_manage:
+            await send_error(interaction, "Seul l'étudiant-prof qui a créé ce cours ou un gestionnaire peut le modifier !")
+            return
+        
+        if eclass['status'] != 'scheduled':
+            await send_error(interaction, f"Ce cours ne peut pas être modifié car il est {eclass['status']} !")
+            return
+        
+        # Check if at least one field is provided
+        if not any([title, description, date, duration]):
+            await send_error(interaction, "Vous devez spécifier au moins un champ à modifier !")
+            return
+        
+        updates = {}
+        
+        # Update title if provided
+        if title:
+            updates['title'] = title
+        
+        # Update description if provided
+        if description:
+            updates['description'] = description
+        
+        # Update date if provided
+        if date:
+            try:
+                new_datetime = datetime.strptime(date, "%d-%m-%Y %H:%M")
+                
+                # Check if date is in the future
+                if new_datetime <= datetime.now():
+                    await send_error(interaction, "La nouvelle date du cours doit être dans le futur !")
+                    return
+                
+                # Calculate new end time
+                current_duration = eclass.get('duration', 60)
+                if duration:
+                    current_duration = duration
+                    
+                end_datetime = new_datetime + timedelta(minutes=current_duration)
+                
+                updates['datetime'] = new_datetime.isoformat()
+                updates['end_datetime'] = end_datetime.isoformat()
+                updates['notified'] = False  # Reset notification flag
+                
+            except ValueError:
+                await send_error(
+                    interaction,
+                    "Format de date invalide ! Veuillez utiliser : DD-MM-YYYY HH:MM (par exemple, 15-12-2025 14:30)"
+                )
+                return
+        
+        # Update duration if provided (and date wasn't updated)
+        if duration and not date:
+            current_datetime = datetime.fromisoformat(eclass['datetime'])
+            end_datetime = current_datetime + timedelta(minutes=duration)
+            updates['duration'] = duration
+            updates['end_datetime'] = end_datetime.isoformat()
+        elif duration and date:
+            # Duration already handled with date update
+            updates['duration'] = duration
+        
+        # Update the eclass
+        self.data.update_eclass(eclass_id, updates)
+        
+        # Get updated eclass for embed update
+        updated_eclass = self.data.get_eclass(eclass_id)
+        
+        # Update the announcement message embed
+        try:
+            announcement_channel = self.bot.get_channel(updated_eclass['channel_message_id'])
+            if announcement_channel:
+                announcement_msg = await announcement_channel.fetch_message(updated_eclass['message_id'])
+                
+                # Recreate embed with updated info
+                class_datetime = datetime.fromisoformat(updated_eclass['datetime'])
+                end_datetime = datetime.fromisoformat(updated_eclass['end_datetime'])
+                start_timestamp = int(class_datetime.timestamp())
+                end_timestamp = int(end_datetime.timestamp())
+                
+                embed = discord.Embed(
+                    title=updated_eclass['title'],
+                    description=updated_eclass['description'],
+                    color=discord.Color.orange(),
+                    timestamp=class_datetime
+                )
+                embed.add_field(name="📚 Matière", value=updated_eclass['subject'], inline=False)
+                embed.add_field(
+                    name="📅 Début", 
+                    value=f"<t:{start_timestamp}:F>\n<t:{start_timestamp}:R>", 
+                    inline=True
+                )
+                embed.add_field(
+                    name="🏁 Fin", 
+                    value=f"<t:{end_timestamp}:t>", 
+                    inline=True
+                )
+                embed.add_field(name="⏱️ Durée", value=format_duration(updated_eclass['duration']), inline=True)
+                
+                voice_channel = self.bot.get_channel(updated_eclass['channel_id'])
+                if voice_channel:
+                    embed.add_field(name="🔊 Lieu", value=voice_channel.mention, inline=True)
+                
+                embed.add_field(name="👨‍🏫 E-Prof", value=f"<@{updated_eclass['teacher_id']}>", inline=True)
+                embed.add_field(name="🆔 ID du cours", value=f"`{eclass_id}`", inline=True)
+                embed.set_footer(text="Réagissez avec 🔔 pour être notifié 30 minutes avant le début du cours !")
+                
+                await announcement_msg.edit(embed=embed)
+        except Exception as e:
+            print(f"Error updating announcement message: {e}")
+        
+        # Build success message
+        changes = []
+        if title:
+            changes.append(f"titre: '{title}'")
+        if description:
+            changes.append(f"description: '{description}'")
+        if date:
+            changes.append(f"date: {date}")
+        if duration:
+            changes.append(f"durée: {duration}min")
+        
+        await send_success(
+            interaction, 
+            f"Cours '{updated_eclass['title']}' modifié !\nChangements: {', '.join(changes)}", 
+            ephemeral=False
+        )
     
     @eclass.command(name="list", description="Lister tous les cours programmés")
     async def list(self, interaction: discord.Interaction):
