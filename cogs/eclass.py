@@ -748,6 +748,29 @@ class EClassCog(commands.Cog):
                     
                     await announcement_channel.send(embed=embed)
                 
+                # Send DM notifications to subscribed users that class has started
+                for user_id in eclass['subscribed_users']:
+                    try:
+                        user = await self.bot.fetch_user(user_id)
+                        dm_embed = discord.Embed(
+                            title="🎓 Le cours a démarré !",
+                            description=f"Le cours **{eclass['title']}** vient de commencer !",
+                            color=discord.Color.green()
+                        )
+                        dm_embed.add_field(
+                            name="Matière",
+                            value=eclass.get('subject', 'N/A'),
+                            inline=True
+                        )
+                        
+                        voice_channel = self.bot.get_channel(eclass['channel_id'])
+                        if voice_channel:
+                            dm_embed.add_field(name="Rejoindre", value=voice_channel.mention, inline=True)
+                        
+                        await user.send(embed=dm_embed)
+                    except:
+                        pass  # User has DMs disabled or other error
+                
                 # Start tracking participants
                 if eclass_id not in self.tracking_tasks or self.tracking_tasks[eclass_id].done():
                     self.tracking_tasks[eclass_id] = self.bot.loop.create_task(

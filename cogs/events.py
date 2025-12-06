@@ -37,7 +37,7 @@ class EventsCog(commands.Cog):
                     user = await self.bot.fetch_user(payload.user_id)
                     await user.send(
                         f"✅ Vous êtes abonné aux notifications pour le cours : **{eclass['title']}**\n"
-                        f"Vous serez notifié 30 minutes avant le début !"
+                        f"Vous serez notifié 30 minutes avant le début du cours et lorsque le cours commencera !"
                     )
                 except:
                     pass  # User has DMs disabled
