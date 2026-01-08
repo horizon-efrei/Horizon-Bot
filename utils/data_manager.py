@@ -270,8 +270,10 @@ class DataManager:
                 ('message_count',)
             )
             
-            # Check if message is after September 1st
-            sept_1st = datetime(datetime.now().year, 9, 1)
+            # Check if message is after September 1st (school year starts in September of previous year)
+            current_date = datetime.now()
+            sept_year = current_date.year if current_date.month >= 9 else current_date.year - 1
+            sept_1st = datetime(sept_year, 9, 1)
             if message_date.replace(tzinfo=None) >= sept_1st:
                 cursor.execute(
                     'UPDATE statistics SET value = value + 1 WHERE key = ?',
@@ -298,7 +300,9 @@ class DataManager:
     
     def count_eclasses_since_sept(self) -> int:
         """Count eclasses created since September 1st"""
-        sept_1st = datetime(datetime.now().year, 9, 1).isoformat()
+        current_date = datetime.now()
+        sept_year = current_date.year if current_date.month >= 9 else current_date.year - 1
+        sept_1st = datetime(sept_year, 9, 1).isoformat()
         
         with self._get_connection() as conn:
             cursor = conn.cursor()
@@ -311,7 +315,9 @@ class DataManager:
     
     def get_total_eclass_hours_since_sept(self) -> Dict[str, int]:
         """Get total hours of completed eclasses since September 1st"""
-        sept_1st = datetime(datetime.now().year, 9, 1).isoformat()
+        current_date = datetime.now()
+        sept_year = current_date.year if current_date.month >= 9 else current_date.year - 1
+        sept_1st = datetime(sept_year, 9, 1).isoformat()
         
         with self._get_connection() as conn:
             cursor = conn.cursor()
